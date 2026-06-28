@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">Luna Daily sunrise header</title>
+  <desc id="desc">A calm abstract sunrise over soft hills for the Luna Daily app.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#d8edf4"/>
+      <stop offset="0.48" stop-color="#f7fbf6"/>
+      <stop offset="1" stop-color="#f0b75f"/>
+    </linearGradient>
+    <linearGradient id="hillA" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#5f8f73"/>
+      <stop offset="1" stop-color="#95b98d"/>
+    </linearGradient>
+    <linearGradient id="hillB" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#17211d"/>
+      <stop offset="1" stop-color="#5a6860"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#sky)"/>
+  <circle cx="880" cy="210" r="96" fill="#fff6d8" opacity="0.9"/>
+  <circle cx="245" cy="165" r="54" fill="#ffffff" opacity="0.45"/>
+  <path d="M0 510 C180 410 330 470 505 392 C690 310 835 370 1200 265 L1200 800 L0 800 Z" fill="url(#hillA)" opacity="0.88"/>
+  <path d="M0 615 C205 545 360 570 555 505 C780 430 930 515 1200 420 L1200 800 L0 800 Z" fill="url(#hillB)" opacity="0.92"/>
+  <path d="M112 642 C258 602 427 622 612 565 C806 505 965 555 1088 505" fill="none" stroke="#f7fbf6" stroke-width="12" stroke-linecap="round" opacity="0.5"/>
+  <text x="86" y="150" fill="#17211d" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="78" font-weight="800">Luna Daily</text>
+  <text x="90" y="214" fill="#5a6860" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="34" font-weight="650">one honest check-in at a time</text>
+</svg>
