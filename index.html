@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f7fbf6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Luna Daily">
+    <title>Luna Daily</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="assets/daily-header.svg">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="setupView" class="setup-panel" aria-labelledby="setupTitle">
+        <div class="brand-lockup">
+          <img src="assets/daily-header.svg" alt="" class="setup-image">
+          <div>
+            <p class="eyebrow">Luna Daily</p>
+            <h1 id="setupTitle">Make your daily check-in yours.</h1>
+          </div>
+        </div>
+
+        <form id="setupForm" class="setup-form">
+          <label>
+            Your name
+            <input id="nameInput" name="name" autocomplete="given-name" placeholder="Rafael">
+          </label>
+
+          <fieldset>
+            <legend>Starting routine</legend>
+            <label class="radio-row">
+              <input type="radio" name="routine" value="luna" checked>
+              <span>Luna's default</span>
+            </label>
+            <label class="radio-row">
+              <input type="radio" name="routine" value="blank">
+              <span>Blank slate</span>
+            </label>
+          </fieldset>
+
+          <button type="submit" class="primary-button">Start tracking</button>
+        </form>
+      </section>
+
+      <section id="trackerView" class="tracker-view hidden" aria-live="polite">
+        <header class="hero">
+          <img src="assets/daily-header.svg" alt="" class="hero-image">
+          <div class="hero-content">
+            <p id="todayLabel" class="eyebrow"></p>
+            <h1 id="greeting">Today</h1>
+            <div class="date-picker-row">
+              <button id="prevDay" type="button" class="icon-button" aria-label="Previous day">&lt;</button>
+              <input id="dateInput" type="date" aria-label="Selected date">
+              <button id="nextDay" type="button" class="icon-button" aria-label="Next day">&gt;</button>
+            </div>
+          </div>
+        </header>
+
+        <section class="quick-stats" aria-label="Quick stats">
+          <article>
+            <span id="monthHits">0</span>
+            <p>hits this month</p>
+          </article>
+          <article>
+            <span id="monthDrinks">0</span>
+            <p>drinks this month</p>
+          </article>
+          <article>
+            <span id="workoutCount">0</span>
+            <p>workouts</p>
+          </article>
+        </section>
+
+        <section class="advice-card" aria-labelledby="adviceTitle">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Daily advice</p>
+              <h2 id="adviceTitle"></h2>
+            </div>
+          </div>
+          <p id="adviceText"></p>
+          <p class="safety-note">General support only. If you are in crisis in the United States, call or text 988.</p>
+        </section>
+
+        <section class="today-card" aria-labelledby="todayTitle">
+          <div class="section-heading">
+            <h2 id="todayTitle">Daily check-in</h2>
+            <button id="resetToday" type="button" class="ghost-button">Clear day</button>
+          </div>
+
+          <div class="habit-grid">
+            <label class="toggle-tile">
+              <span>Vitamins</span>
+              <input id="vitaminsInput" type="checkbox">
+            </label>
+
+            <label class="toggle-tile">
+              <span>Workout</span>
+              <input id="workoutInput" type="checkbox">
+            </label>
+          </div>
+
+          <div class="number-panel">
+            <label for="hitsInput">Cannabis hits</label>
+            <div class="stepper">
+              <button type="button" data-step="hitsInput" data-delta="-1" aria-label="Decrease hits">-</button>
+              <input id="hitsInput" type="number" min="0" max="99" step="1" inputmode="numeric">
+              <button type="button" data-step="hitsInput" data-delta="1" aria-label="Increase hits">+</button>
+            </div>
+          </div>
+
+          <div class="number-panel">
+            <label for="drinksInput">Drinks</label>
+            <div class="stepper">
+              <button type="button" data-step="drinksInput" data-delta="-0.5" aria-label="Decrease drinks">-</button>
+              <input id="drinksInput" type="number" min="0" max="30" step="0.5" inputmode="decimal">
+              <button type="button" data-step="drinksInput" data-delta="0.5" aria-label="Increase drinks">+</button>
+            </div>
+          </div>
+
+          <div class="number-panel">
+            <label for="weightInput">Weight</label>
+            <div class="weight-row">
+              <input id="weightInput" type="number" min="0" max="700" step="0.1" inputmode="decimal" placeholder="lbs">
+              <span>lbs</span>
+            </div>
+          </div>
+
+          <label class="notes-label" for="notesInput">Notes</label>
+          <textarea id="notesInput" rows="3" placeholder="Anything worth remembering?"></textarea>
+        </section>
+
+        <section id="customSection" class="today-card">
+          <div class="section-heading">
+            <h2>My extras</h2>
+          </div>
+          <div id="customHabitList" class="custom-list"></div>
+          <form id="addHabitForm" class="add-habit-form">
+            <input id="newHabitInput" placeholder="Add anything to track">
+            <select id="newHabitType" aria-label="Tracker type">
+              <option value="checkbox">Yes/no</option>
+              <option value="number">Number</option>
+              <option value="decimal">Decimal</option>
+            </select>
+            <button type="submit" class="secondary-button">Add</button>
+          </form>
+        </section>
+
+        <section class="today-card">
+          <div class="section-heading">
+            <div>
+              <h2>Weekly analysis</h2>
+              <p id="weekRange" class="subtle-copy"></p>
+            </div>
+          </div>
+          <div class="week-grid">
+            <article>
+              <span id="weekHits">0</span>
+              <p>hits</p>
+            </article>
+            <article>
+              <span id="weekDrinks">0</span>
+              <p>drinks</p>
+            </article>
+            <article>
+              <span id="weekVitamins">0/7</span>
+              <p>vitamins</p>
+            </article>
+            <article>
+              <span id="weekWorkouts">0</span>
+              <p>workouts</p>
+            </article>
+          </div>
+          <div id="weekCustomList" class="week-list"></div>
+          <p id="weekInsight" class="insight-line"></p>
+          <p id="weekWeight" class="insight-line"></p>
+        </section>
+
+        <section class="today-card">
+          <div class="section-heading">
+            <h2>Recent days</h2>
+          </div>
+          <div id="calendarStrip" class="calendar-strip"></div>
+        </section>
+
+        <section class="today-card">
+          <div class="section-heading">
+            <h2>Photos</h2>
+          </div>
+          <div id="photoGrid" class="photo-grid"></div>
+          <label class="photo-upload">
+            <input id="photoInput" type="file" accept="image/*">
+            Add a photo
+          </label>
+        </section>
+
+        <section class="today-card">
+          <div class="section-heading">
+            <h2>Data</h2>
+          </div>
+          <div class="data-actions">
+            <button id="exportData" type="button" class="secondary-button">Export backup</button>
+            <label class="import-button">
+              <input id="importData" type="file" accept="application/json,.json">
+              Import backup
+            </label>
+          </div>
+          <p id="dataStatus" class="subtle-copy" aria-live="polite"></p>
+        </section>
+
+        <section class="mission-band">
+          <p class="eyebrow">The Human Question project</p>
+          <h2>Free because support should not be a subscription.</h2>
+          <p>This app is being built to help people track health, routines, and substance use honestly without shame. Core support stays free. Donations may later help keep it running for everyone.</p>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
