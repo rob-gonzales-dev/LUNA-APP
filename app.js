@@ -1,8 +1,15 @@
-import { firebaseConfig, firebaseIsConfigured } from "./firebase-config.js";
-
 const STORAGE_KEY = "luna-daily-v1";
 const SYNC_DEBOUNCE_MS = 1400;
 const today = new Date();
+
+const firebaseConfig = {
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  appId: ""
+};
+
+const firebaseIsConfigured = Object.values(firebaseConfig).every(Boolean);
 
 const defaultState = {
   profile: null,
