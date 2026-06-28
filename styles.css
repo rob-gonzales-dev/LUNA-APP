@@ -51,7 +51,8 @@ button {
 .setup-panel,
 .today-card,
 .advice-card,
-.mission-band {
+.mission-band,
+.disclaimer-band {
   background: rgba(255, 255, 255, 0.86);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -105,10 +106,17 @@ h2 {
   letter-spacing: 0;
 }
 
+h3 {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
 .setup-form,
 .today-card,
 .advice-card,
-.mission-band {
+.mission-band,
+.disclaimer-band {
   display: grid;
   gap: 16px;
 }
@@ -548,6 +556,20 @@ textarea {
   display: none;
 }
 
+.sync-panel {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--soft);
+  padding: 12px;
+}
+
+.sync-actions {
+  display: grid;
+  gap: 8px;
+}
+
 .data-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -577,6 +599,24 @@ textarea {
 .mission-band p {
   margin: 0;
   line-height: 1.45;
+}
+
+.disclaimer-band {
+  padding: 16px;
+  background: #ffffff;
+  border-color: rgba(223, 112, 95, 0.28);
+}
+
+.disclaimer-band .eyebrow {
+  color: var(--coral);
+}
+
+.disclaimer-band p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.5;
 }
 
 @media (min-width: 720px) {
