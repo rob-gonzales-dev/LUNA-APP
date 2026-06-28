@@ -1,0 +1,17 @@
+{
+  "name": "Luna Daily",
+  "short_name": "Luna",
+  "description": "A private daily health, routine, and substance-use check-in app.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7fbf6",
+  "theme_color": "#5f8f73",
+  "icons": [
+    {
+      "src": "assets/daily-header.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
