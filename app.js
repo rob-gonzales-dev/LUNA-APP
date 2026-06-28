@@ -1,15 +1,24 @@
+import { firebaseConfig, firebaseIsConfigured } from "./firebase-config.js";
+
 const STORAGE_KEY = "luna-daily-v1";
+const SYNC_DEBOUNCE_MS = 1400;
 const today = new Date();
 
 const defaultState = {
   profile: null,
   customHabits: [],
   entries: {},
-  photos: []
+  photos: [],
+  updatedAt: null
 };
 
 let state = loadState();
 let selectedDate = toDateKey(today);
+let firebaseServices = null;
+let currentUser = null;
+let syncTimer = null;
+let syncInProgress = false;
+let isApplyingRemoteState = false;
 
 const setupView = document.querySelector("#setupView");
 const trackerView = document.querySelector("#trackerView");
@@ -50,6 +59,11 @@ const adviceText = document.querySelector("#adviceText");
 const exportData = document.querySelector("#exportData");
 const importData = document.querySelector("#importData");
 const dataStatus = document.querySelector("#dataStatus");
+const signInButton = document.querySelector("#signInButton");
+const signOutButton = document.querySelector("#signOutButton");
+const syncNowButton = document.querySelector("#syncNowButton");
+const syncTitle = document.querySelector("#syncTitle");
+const syncStatus = document.querySelector("#syncStatus");
 
 const dailyAdvice = [
   {
@@ -165,8 +179,12 @@ photoInput.addEventListener("change", () => {
 
 exportData.addEventListener("click", exportBackup);
 importData.addEventListener("change", importBackup);
+signInButton.addEventListener("click", signInWithGoogle);
+signOutButton.addEventListener("click", signOutOfGoogle);
+syncNowButton.addEventListener("click", () => syncToCloud({ force: true }));
 
 render();
+initializeFirebaseSync();
 
 function render() {
   const hasProfile = Boolean(state.profile);
@@ -503,6 +521,200 @@ function setDataStatus(message) {
   }, 4000);
 }
 
+async function initializeFirebaseSync() {
+  renderSyncState("Checking sync setup...");
+
+  if (!firebaseIsConfigured) {
+    signInButton.disabled = true;
+    signInButton.textContent = "Firebase setup needed";
+    renderSyncState("Local only", "Firebase is not configured yet. Add project keys to firebase-config.js to enable Google sign-in sync.");
+    return;
+  }
+
+  try {
+    const [
+      { initializeApp },
+      authModule,
+      firestoreModule
+    ] = await Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js"),
+      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js")
+    ]);
+
+    const app = initializeApp(firebaseConfig);
+    const auth = authModule.getAuth(app);
+    const db = firestoreModule.getFirestore(app);
+    const provider = new authModule.GoogleAuthProvider();
+
+    firebaseServices = {
+      auth,
+      db,
+      provider,
+      signInWithPopup: authModule.signInWithPopup,
+      signInWithRedirect: authModule.signInWithRedirect,
+      getRedirectResult: authModule.getRedirectResult,
+      signOut: authModule.signOut,
+      onAuthStateChanged: authModule.onAuthStateChanged,
+      doc: firestoreModule.doc,
+      getDoc: firestoreModule.getDoc,
+      setDoc: firestoreModule.setDoc,
+      serverTimestamp: firestoreModule.serverTimestamp
+    };
+
+    firebaseServices.onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      renderSyncState();
+      if (user) await loadCloudState();
+    });
+
+    await firebaseServices.getRedirectResult(auth);
+    renderSyncState();
+  } catch (error) {
+    console.error(error);
+    renderSyncState("Sync unavailable", "Firebase could not load. Local tracking still works.");
+  }
+}
+
+async function signInWithGoogle() {
+  if (!firebaseServices) return;
+  renderSyncState("Opening Google sign-in...");
+  try {
+    await firebaseServices.signInWithPopup(firebaseServices.auth, firebaseServices.provider);
+  } catch (error) {
+    if (error?.code === "auth/popup-blocked" || error?.code === "auth/popup-closed-by-user") {
+      await firebaseServices.signInWithRedirect(firebaseServices.auth, firebaseServices.provider);
+      return;
+    }
+    console.error(error);
+    renderSyncState("Sign-in did not finish", "Local tracking still works. Try Google sign-in again when ready.");
+  }
+}
+
+async function signOutOfGoogle() {
+  if (!firebaseServices) return;
+  await firebaseServices.signOut(firebaseServices.auth);
+  currentUser = null;
+  renderSyncState();
+}
+
+async function loadCloudState() {
+  if (!canUseCloud()) return;
+  renderSyncState("Checking cloud data...");
+
+  try {
+    const snapshot = await firebaseServices.getDoc(cloudStateDoc());
+    if (!snapshot.exists()) {
+      await syncToCloud({ force: true });
+      return;
+    }
+
+    const remoteState = normalizeState(snapshot.data().state);
+    const remoteUpdated = Date.parse(remoteState.updatedAt || "");
+    const localUpdated = Date.parse(state.updatedAt || "");
+
+    if (remoteUpdated > localUpdated) {
+      isApplyingRemoteState = true;
+      state = {
+        ...remoteState,
+        photos: state.photos
+      };
+      selectedDate = toDateKey(today);
+      saveState({ sync: false, touch: false });
+      isApplyingRemoteState = false;
+      render();
+      renderSyncState("Synced from cloud", "Loaded your latest Luna Daily data. Photos stay local for now.");
+      return;
+    }
+
+    await syncToCloud({ force: true });
+  } catch (error) {
+    console.error(error);
+    renderSyncState("Cloud check failed", "Local tracking still works. The app will try again later.");
+  }
+}
+
+async function syncToCloud({ force = false } = {}) {
+  if (!canUseCloud() || syncInProgress) return;
+  if (!force && isApplyingRemoteState) return;
+
+  syncInProgress = true;
+  renderSyncState("Syncing...");
+
+  try {
+    await firebaseServices.setDoc(cloudStateDoc(), {
+      app: "Luna Daily",
+      version: 1,
+      updatedAt: state.updatedAt,
+      savedAt: firebaseServices.serverTimestamp(),
+      state: cloudSafeState()
+    }, { merge: true });
+    renderSyncState("Synced", "Your habit data is backed up for signed-in devices. Photos stay local for now.");
+  } catch (error) {
+    console.error(error);
+    renderSyncState("Sync failed", "Local tracking is saved. Cloud sync will try again after your next change.");
+  } finally {
+    syncInProgress = false;
+  }
+}
+
+function scheduleCloudSync() {
+  if (!canUseCloud()) return;
+  window.clearTimeout(syncTimer);
+  syncTimer = window.setTimeout(() => {
+    syncToCloud();
+  }, SYNC_DEBOUNCE_MS);
+}
+
+function canUseCloud() {
+  return Boolean(firebaseServices && currentUser);
+}
+
+function cloudStateDoc() {
+  return firebaseServices.doc(firebaseServices.db, "users", currentUser.uid, "lunaDaily", "state");
+}
+
+function cloudSafeState() {
+  return {
+    ...state,
+    photos: []
+  };
+}
+
+function renderSyncState(title, message) {
+  if (!firebaseIsConfigured) {
+    syncTitle.textContent = title || "Local only";
+    syncStatus.textContent = message || "Firebase is not configured yet.";
+    signInButton.classList.remove("hidden");
+    signOutButton.classList.add("hidden");
+    syncNowButton.classList.add("hidden");
+    return;
+  }
+
+  if (!firebaseServices) {
+    syncTitle.textContent = title || "Preparing sync";
+    syncStatus.textContent = message || "Loading Google sign-in.";
+    return;
+  }
+
+  if (!currentUser) {
+    syncTitle.textContent = title || "Local only";
+    syncStatus.textContent = message || "Sign in with Google to sync across devices.";
+    signInButton.disabled = false;
+    signInButton.textContent = "Sign in with Google";
+    signInButton.classList.remove("hidden");
+    signOutButton.classList.add("hidden");
+    syncNowButton.classList.add("hidden");
+    return;
+  }
+
+  syncTitle.textContent = title || "Cloud sync on";
+  syncStatus.textContent = message || `Signed in as ${currentUser.email || "Google user"}.`;
+  signInButton.classList.add("hidden");
+  signOutButton.classList.remove("hidden");
+  syncNowButton.classList.remove("hidden");
+}
+
 function moveSelectedDay(delta) {
   const date = fromDateKey(selectedDate);
   date.setDate(date.getDate() + delta);
@@ -540,8 +752,11 @@ function normalizeState(value) {
   };
 }
 
-function saveState() {
+function saveState(options = {}) {
+  const { sync = true, touch = true } = options;
+  if (touch) state.updatedAt = new Date().toISOString();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (sync) scheduleCloudSync();
 }
 
 function toDateKey(date) {
