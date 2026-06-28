@@ -200,6 +200,18 @@
           <div class="section-heading">
             <h2>Data</h2>
           </div>
+          <div class="sync-panel">
+            <div>
+              <p class="eyebrow">Sync</p>
+              <h3 id="syncTitle">Local only</h3>
+              <p id="syncStatus" class="subtle-copy">Connect Google sign-in later to sync across devices.</p>
+            </div>
+            <div class="sync-actions">
+              <button id="signInButton" type="button" class="secondary-button">Sign in with Google</button>
+              <button id="signOutButton" type="button" class="ghost-button hidden">Sign out</button>
+              <button id="syncNowButton" type="button" class="ghost-button hidden">Sync now</button>
+            </div>
+          </div>
           <div class="data-actions">
             <button id="exportData" type="button" class="secondary-button">Export backup</button>
             <label class="import-button">
@@ -215,9 +227,15 @@
           <h2>Free because support should not be a subscription.</h2>
           <p>This app is being built to help people track health, routines, and substance use honestly without shame. Core support stays free. Donations may later help keep it running for everyone.</p>
         </section>
+
+        <section class="disclaimer-band" aria-labelledby="disclaimerTitle">
+          <p class="eyebrow">Disclaimer</p>
+          <h2 id="disclaimerTitle">Informational purposes only.</h2>
+          <p>Luna Daily is a self-tracking and reflection tool. It does not provide medical, mental health, legal, financial, or professional advice, and it is not a substitute for care from a qualified professional. If you have a medical emergency or are in crisis in the United States, call 911 or call or text 988.</p>
+        </section>
       </section>
     </main>
 
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>
